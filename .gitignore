@@ -1,1 +1,8 @@
 /target
+*.png
+*.jpeg
+*.jpg
+*.jxl
+*.bmp
+*.avif
+*.gif

@@ -12,7 +12,7 @@ struct Args {
     #[clap(short, long, value_parser)]
     file: String,
 
-    /// Determine the quality of lossy re-enocding (maximum of 100)
+    /// Determine the quality of lossy re-encoding (maximum of 100)
     #[clap(short, long, value_parser, default_value_t = 80)]
     quality: u8,
 }

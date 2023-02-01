@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::Write;
 
 #[derive(Parser, Debug)]
-#[clap(author, version, about = "A CLI program to convert image files", long_about = None)]
+#[clap(author, version, about = "A CLI program to compress image files\nSupports .jpg, .png, .gif, & .bmp", long_about = None)]
 struct Args {
     /// The file to compress
     #[clap(short, long, value_parser)]
@@ -15,8 +15,9 @@ struct Args {
     #[clap(short, long, value_parser)]
     output: String,
 
-    /// The speed of compression (1 => slowest ; 10 => fastest)
-    #[clap(short, long, value_parser, default_value_t = 3)]
+    /// The speed of compression (1 => slowest)
+    /// .gif => [1,30]
+    #[clap(short, long, value_parser, default_value_t = 1)]
     speed: u8,
 
     /// Determine the quality of lossy re-encoding (maximum of 100)
@@ -29,34 +30,84 @@ fn main() -> Result<()> {
     let args: Args = Args::parse();
     let input_file = &args.file;
     let output_file = &args.output;
-    let _quality: u8 = args.quality.clamp(1, 100);
-    let _speed = args.speed.clamp(1, 10);
+    let quality: u8 = args.quality.clamp(1, 100);
+    let speed = args.speed;
 
-    if ext_is_valid(input_file) {
+    // Validate files' extensions before compressing
+    if ext_is_valid(input_file) && ext_is_valid(output_file) {
         let image = image::open(input_file).context(format!("Could not open {}", input_file))?;
 
         let mut out = File::create(output_file).context("Unable to create file")?;
 
         let mut data: Vec<u8> = [].to_vec();
 
-        let encoder = image::codecs::png::PngEncoder::new_with_quality(
-            &mut data,
-            image::codecs::png::CompressionType::Best,
-            image::codecs::png::FilterType::Adaptive,
-        );
+        match extension(output_file) {
+            ".png" => {
+                let encoder = image::codecs::png::PngEncoder::new_with_quality(
+                    &mut data,
+                    image::codecs::png::CompressionType::Best,
+                    image::codecs::png::FilterType::Adaptive,
+                );
+                encoder
+                    .write_image(
+                        image.as_bytes(),
+                        image.width(),
+                        image.height(),
+                        image.color(),
+                    )
+                    .context("Could not encode the input image to .png")?;
+            }
 
-        encoder
-            .write_image(
-                image.as_bytes(),
-                image.width(),
-                image.height(),
-                image.color(),
-            )
-            .context("Could not encode image")?;
+            ".jpg" | ".jpeg" => {
+                let encoder =
+                    image::codecs::jpeg::JpegEncoder::new_with_quality(&mut data, quality);
+                encoder
+                    .write_image(
+                        image.as_bytes(),
+                        image.width(),
+                        image.height(),
+                        image.color(),
+                    )
+                    .context("Could not encode the input image to .jpg/.jpeg")?;
+            }
+
+            ".bmp" => {
+                let encoder = image::codecs::bmp::BmpEncoder::new(&mut data);
+                encoder
+                    .write_image(
+                        image.as_bytes(),
+                        image.width(),
+                        image.height(),
+                        image.color(),
+                    )
+                    .context("Could not encode the input image to .jpg/.jpeg")?;
+            }
+
+            ".gif" => {
+                let mut encoder = image::codecs::gif::GifEncoder::new_with_speed(
+                    &mut data,
+                    speed.clamp(1, 30).into(),
+                );
+                encoder
+                    .encode(
+                        image.as_bytes(),
+                        image.width(),
+                        image.height(),
+                        image.color(),
+                    )
+                    .context("Could not encode the input image to .gif")?;
+            }
+
+            _ => bail!("Invalid output file format {}", extension(output_file)),
+        }
 
         out.write_all(&data).context("Could not write to file")?;
     } else {
-        println!("Invalid image format!")
+        if !ext_is_valid(input_file) {
+            bail!("Invalid input format {}", extension(input_file));
+        } else if ext_is_valid(output_file) {
+            bail!("Invalid output format {}", extension(output_file));
+        }
     }
 
     Ok(())

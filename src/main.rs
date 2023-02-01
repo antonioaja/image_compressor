@@ -5,18 +5,21 @@ use std::fs::File;
 use std::io::Write;
 
 #[derive(Parser, Debug)]
-#[clap(author, version, about = "A CLI program to compress image files\nSupports .jpg, .png, .gif, & .bmp", long_about = None)]
+#[clap(
+    author = "Antonio Aguilar",
+    version,
+    about = "A CLI program to compress image files\nSupports .jpg, .png, .gif, & .bmp"
+)]
 struct Args {
     /// The file to compress
     #[clap(short, long, value_parser)]
-    file: String,
+    input: String,
 
     /// Output file (include extension)
     #[clap(short, long, value_parser)]
     output: String,
 
-    /// The speed of compression (1 => slowest)
-    /// .gif => [1,30]
+    /// The speed of compression (1 => slowest; .gif => [1,30])
     #[clap(short, long, value_parser, default_value_t = 1)]
     speed: u8,
 
@@ -28,7 +31,7 @@ struct Args {
 fn main() -> Result<()> {
     // Collect arguments
     let args: Args = Args::parse();
-    let input_file = &args.file;
+    let input_file = &args.input;
     let output_file = &args.output;
     let quality: u8 = args.quality.clamp(1, 100);
     let speed = args.speed;
@@ -41,7 +44,7 @@ fn main() -> Result<()> {
 
         let mut data: Vec<u8> = [].to_vec();
 
-        match extension(output_file) {
+        match extension(&output_file.to_lowercase()) {
             ".png" => {
                 let encoder = image::codecs::png::PngEncoder::new_with_quality(
                     &mut data,
@@ -115,7 +118,7 @@ fn main() -> Result<()> {
 
 pub fn ext_is_valid(filename: &str) -> bool {
     matches!(
-        extension(filename),
+        extension(&filename.to_lowercase()),
         ".jpg" | ".jpeg" | ".png" | ".gif" | ".bmp"
     )
 }

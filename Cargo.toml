@@ -13,3 +13,4 @@ lto = true
 image = "0.24.4"
 anyhow = "1.0.58"
 clap = { version = "3.2.23", features = ["derive"] }
+jpegxl-rs = "0.6.1"

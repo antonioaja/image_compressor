@@ -42,7 +42,7 @@ fn main() -> Result<()> {
 
         let mut out = File::create(output_file).context("Unable to create file")?;
 
-        let mut data: Vec<u8> = [].to_vec();
+        let mut data: Vec<u8> = vec![];
 
         match extension(&output_file.to_lowercase()) {
             ".png" => {
@@ -104,11 +104,12 @@ fn main() -> Result<()> {
             _ => bail!("Invalid output file format {}", extension(output_file)),
         }
 
-        out.write_all(&data).context("Could not write to file")?;
+        out.write_all(&data)
+            .context(format!("Could not write to {}", output_file))?;
     } else {
         if !ext_is_valid(input_file) {
             bail!("Invalid input format {}", extension(input_file));
-        } else if ext_is_valid(output_file) {
+        } else if !ext_is_valid(output_file) {
             bail!("Invalid output format {}", extension(output_file));
         }
     }

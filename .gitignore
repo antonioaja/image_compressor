@@ -6,3 +6,6 @@
 *.bmp
 *.avif
 *.gif
+*.html
+*.json
+Cargo.lock

@@ -106,12 +106,10 @@ fn main() -> Result<()> {
 
         out.write_all(&data)
             .context(format!("Could not write to {}", output_file))?;
-    } else {
-        if !ext_is_valid(input_file) {
-            bail!("Invalid input format {}", extension(input_file));
-        } else if !ext_is_valid(output_file) {
-            bail!("Invalid output format {}", extension(output_file));
-        }
+    } else if !ext_is_valid(input_file) {
+        bail!("Invalid input format {}", extension(input_file));
+    } else if !ext_is_valid(output_file) {
+        bail!("Invalid output format {}", extension(output_file));
     }
 
     Ok(())
